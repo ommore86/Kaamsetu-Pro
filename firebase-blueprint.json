@@ -1,0 +1,147 @@
+{
+  "entities": {
+    "User": {
+      "title": "User",
+      "description": "Authenticated user profile for customer, professional or admin",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "role": { "type": "string", "enum": ["customer", "professional", "admin"] },
+        "name": { "type": "string", "maxLength": 100 },
+        "email": { "type": "string", "maxLength": 100 },
+        "phone": { "type": "string", "maxLength": 20 },
+        "preferredLanguage": { "type": "string", "enum": ["en", "hi", "mr"] },
+        "city": { "type": "string", "maxLength": 50 },
+        "neighbourhood": { "type": "string", "maxLength": 50 },
+        "createdAt": { "type": "string" }
+      },
+      "required": ["id", "role", "name", "email", "createdAt"]
+    },
+    "ProfessionalProfile": {
+      "title": "ProfessionalProfile",
+      "description": "Public and verified profile for service professionals",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "userId": { "type": "string" },
+        "businessName": { "type": "string", "maxLength": 120 },
+        "ownerName": { "type": "string", "maxLength": 100 },
+        "phone": { "type": "string", "maxLength": 20 },
+        "servicesOffered": { "type": "array" },
+        "serviceArea": { "type": "array" },
+        "experienceYears": { "type": "number" },
+        "indicativePricing": { "type": "string", "maxLength": 100 },
+        "bio": { "type": "string", "maxLength": 500 },
+        "workingHours": { "type": "string", "maxLength": 100 },
+        "verificationStatus": { "type": "string", "enum": ["not_submitted", "pending_review", "verified", "rejected", "suspended"] },
+        "verificationNotes": { "type": "string", "maxLength": 500 },
+        "rating": { "type": "number" },
+        "reviewCount": { "type": "number" },
+        "createdAt": { "type": "string" }
+      },
+      "required": ["id", "userId", "businessName", "servicesOffered", "verificationStatus"]
+    },
+    "ServiceRequest": {
+      "title": "ServiceRequest",
+      "description": "Customer submitted service request on the marketplace",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "customerId": { "type": "string" },
+        "customerName": { "type": "string", "maxLength": 100 },
+        "category": { "type": "string", "maxLength": 80 },
+        "description": { "type": "string", "maxLength": 1000 },
+        "appointmentDate": { "type": "string" },
+        "preferredTime": { "type": "string" },
+        "city": { "type": "string" },
+        "neighbourhood": { "type": "string" },
+        "urgency": { "type": "string", "enum": ["low", "standard", "urgent"] },
+        "status": { "type": "string", "enum": ["draft", "submitted", "finding_professionals", "quotations_received", "booking_confirmed", "work_in_progress", "completed", "cancelled", "disputed"] },
+        "createdAt": { "type": "string" }
+      },
+      "required": ["id", "customerId", "category", "description", "status", "createdAt"]
+    },
+    "Quotation": {
+      "title": "Quotation",
+      "description": "Formal quotation created by a professional for a customer",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "quotationNumber": { "type": "string" },
+        "requestId": { "type": "string" },
+        "professionalId": { "type": "string" },
+        "customerId": { "type": "string" },
+        "subtotal": { "type": "number" },
+        "discount": { "type": "number" },
+        "taxRate": { "type": "number" },
+        "taxAmount": { "type": "number" },
+        "grandTotal": { "type": "number" },
+        "status": { "type": "string", "enum": ["draft", "sent", "accepted", "rejected", "expired"] },
+        "createdAt": { "type": "string" }
+      },
+      "required": ["id", "professionalId", "customerId", "grandTotal", "status", "createdAt"]
+    },
+    "Job": {
+      "title": "Job",
+      "description": "Job operational record for professional SaaS tracking",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "jobNumber": { "type": "string" },
+        "professionalId": { "type": "string" },
+        "customerName": { "type": "string", "maxLength": 100 },
+        "serviceCategory": { "type": "string" },
+        "scheduledDate": { "type": "string" },
+        "estimatedCost": { "type": "number" },
+        "actualCost": { "type": "number" },
+        "status": { "type": "string", "enum": ["new", "scheduled", "in_progress", "waiting_for_parts", "completed", "cancelled"] },
+        "createdAt": { "type": "string" }
+      },
+      "required": ["id", "professionalId", "customerName", "status", "createdAt"]
+    },
+    "Invoice": {
+      "title": "Invoice",
+      "description": "Billing record linked to jobs or standalone service",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "invoiceNumber": { "type": "string" },
+        "professionalId": { "type": "string" },
+        "customerName": { "type": "string" },
+        "grandTotal": { "type": "number" },
+        "amountPaid": { "type": "number" },
+        "balanceDue": { "type": "number" },
+        "status": { "type": "string", "enum": ["unpaid", "partially_paid", "paid", "overdue", "cancelled"] },
+        "dueDate": { "type": "string" },
+        "createdAt": { "type": "string" }
+      },
+      "required": ["id", "professionalId", "invoiceNumber", "grandTotal", "status", "createdAt"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": "User",
+      "description": "User profile with role and contact preferences"
+    },
+    "/professionalProfiles/{profileId}": {
+      "schema": "ProfessionalProfile",
+      "description": "Public listings and verification records of professionals"
+    },
+    "/serviceRequests/{requestId}": {
+      "schema": "ServiceRequest",
+      "description": "Marketplace job requests created by customers"
+    },
+    "/quotations/{quotationId}": {
+      "schema": "Quotation",
+      "description": "Official estimates and quotations issued by professionals"
+    },
+    "/jobs/{jobId}": {
+      "schema": "Job",
+      "description": "Operational jobs managed inside KaamSetu Pro SaaS"
+    },
+    "/invoices/{invoiceId}": {
+      "schema": "Invoice",
+      "description": "Invoices and billing ledgers for professional services"
+    }
+  }
+}

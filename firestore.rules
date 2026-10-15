@@ -1,0 +1,85 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Default deny catch-all
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Helper functions
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    function isAdmin() {
+      return isSignedIn() && (
+        request.auth.token.email == 'omgmore2005@gmail.com' ||
+        exists(/databases/$(database)/documents/admins/$(request.auth.uid))
+      );
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    // Users Collection
+    match /users/{userId} {
+      allow get: if isOwner(userId) || isAdmin();
+      allow list: if isAdmin();
+      allow create: if isOwner(userId) && request.resource.data.role in ['customer', 'professional'];
+      allow update: if (isOwner(userId) && !request.resource.data.diff(resource.data).affectedKeys().hasAny(['role'])) || isAdmin();
+      allow delete: if isAdmin();
+    }
+
+    // Professional Profiles
+    match /professionalProfiles/{profileId} {
+      allow get, list: if true; // Public marketplace discovery
+      allow create: if isSignedIn() && request.resource.data.userId == request.auth.uid && request.resource.data.verificationStatus == 'pending_review';
+      allow update: if (isSignedIn() && resource.data.userId == request.auth.uid && !request.resource.data.diff(resource.data).affectedKeys().hasAny(['verificationStatus', 'rating', 'reviewCount'])) || isAdmin();
+      allow delete: if isAdmin();
+    }
+
+    // Service Requests
+    match /serviceRequests/{requestId} {
+      allow get: if isSignedIn();
+      allow list: if isSignedIn();
+      allow create: if isSignedIn() && request.resource.data.customerId == request.auth.uid;
+      allow update: if (isSignedIn() && (resource.data.customerId == request.auth.uid || isAdmin()));
+      allow delete: if isAdmin();
+    }
+
+    // Quotations
+    match /quotations/{quotationId} {
+      allow get: if isSignedIn() && (resource.data.professionalId == request.auth.uid || resource.data.customerId == request.auth.uid || isAdmin());
+      allow list: if isSignedIn() && (resource.data.professionalId == request.auth.uid || resource.data.customerId == request.auth.uid || isAdmin());
+      allow create: if isSignedIn() && request.resource.data.professionalId == request.auth.uid;
+      allow update: if isSignedIn() && (
+        (resource.data.professionalId == request.auth.uid) ||
+        (resource.data.customerId == request.auth.uid && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status', 'acceptedAt', 'rejectedAt'])) ||
+        isAdmin()
+      );
+      allow delete: if isAdmin();
+    }
+
+    // Jobs (Professional SaaS)
+    match /jobs/{jobId} {
+      allow get, list: if isSignedIn() && (resource.data.professionalId == request.auth.uid || isAdmin());
+      allow create: if isSignedIn() && request.resource.data.professionalId == request.auth.uid;
+      allow update: if isSignedIn() && (resource.data.professionalId == request.auth.uid || isAdmin());
+      allow delete: if isSignedIn() && (resource.data.professionalId == request.auth.uid || isAdmin());
+    }
+
+    // Invoices
+    match /invoices/{invoiceId} {
+      allow get, list: if isSignedIn() && (resource.data.professionalId == request.auth.uid || resource.data.customerId == request.auth.uid || isAdmin());
+      allow create: if isSignedIn() && request.resource.data.professionalId == request.auth.uid;
+      allow update: if isSignedIn() && (resource.data.professionalId == request.auth.uid || isAdmin());
+      allow delete: if isAdmin();
+    }
+  }
+}

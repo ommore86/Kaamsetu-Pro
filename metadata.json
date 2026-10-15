@@ -1,0 +1,6 @@
+{
+  "name": "KaamSetu Pro",
+  "description": "Indian local-services marketplace and business management SaaS for independent service professionals.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
